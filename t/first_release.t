@@ -4,7 +4,6 @@ with 'Test::DZP::Changes';
 
 test first_release_with_changes => sub {
     my $self = shift;
-    $self->_set_tzil_ini_opts;
     $self->test_changes('first_release');
 };
 

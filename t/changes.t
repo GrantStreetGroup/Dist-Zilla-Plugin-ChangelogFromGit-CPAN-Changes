@@ -4,7 +4,6 @@ with 'Test::DZP::Changes';
 
 test not_releasing_no_changelog => sub {
     my $self = shift;
-    $self->_set_tzil_ini_opts;
     $ENV{DZIL_RELEASING} = 0;
     $self->tzil->build;
     my $changes_file = $self->tzil->tempdir->child('build/Changes');
@@ -13,56 +12,31 @@ test not_releasing_no_changelog => sub {
 
 test v1_defaults => sub {
     my $self = shift;
-    $self->_set_tzil_ini_opts;
     $self->test_changes('v1_defaults');
 };
 
 test v1_no_author => sub {
     my $self = shift;
-    $self->_set_tzil_ini_opts([
-            'ChangelogFromGit::CPAN::Changes' => {
-                show_author => 0,
-            }
-        ],
-    );
-
+    $self->changes_opts->{show_author} = 0;
     $self->test_changes('v1_no_author');
 };
 
 test v1_email => sub {
     my $self = shift;
-    $self->_set_tzil_ini_opts([
-            'ChangelogFromGit::CPAN::Changes' => {
-                show_author_email => 1,
-            }
-        ],
-    );
-
+    $self->changes_opts->{show_author_email} = 1;
     $self->test_changes('v1_email');
 };
 
 test v1_group_author => sub {
     my $self = shift;
-    $self->_set_tzil_ini_opts([
-            'ChangelogFromGit::CPAN::Changes' => {
-                group_by_author => 1,
-            }
-        ],
-    );
-
+    $self->changes_opts->{group_by_author} = 1;
     $self->test_changes('v1_group_author');
 };
 
 test v1_group_author_email => sub {
     my $self = shift;
-    $self->_set_tzil_ini_opts([
-            'ChangelogFromGit::CPAN::Changes' => {
-                group_by_author   => 1,
-                show_author_email => 1,
-            }
-        ],
-    );
-
+    $self->changes_opts->{group_by_author}   = 1;
+    $self->changes_opts->{show_author_email} = 1;
     $self->test_changes('v1_group_author_email');
 };
 

@@ -9,12 +9,16 @@ use File::chdir;
 use Dist::Zilla::File::InMemory;
 use Path::Tiny;
 
-# requires 'test_repo_name';
-
 has test_repo_name => (is => 'ro',   required => 1);
 has test_repo      => (is => 'lazy');
 has tzil           => (is => 'lazy', clearer  => 1);
-has tzil_ini       => (is => 'rw');
+
+has changes_opts => (
+    is      => 'ro',
+    lazy    => 1,
+    default => sub { {} },
+    clearer => 1,
+);
 
 has _test_data_dir => (
     is      => 'ro',
@@ -23,27 +27,24 @@ has _test_data_dir => (
 # initialise the Dzil test builder object
 sub _build_tzil {
     my $self = shift;
-    my $tzil = Builder->from_config(
-        {dist_root => $self->test_repo},
-        {add_files => $self->tzil_ini},
-    );
-    return $tzil;
-}
 
-# generates the dzil.ini
-sub _set_tzil_ini_opts {
-    my $self = shift;
-
-    my @opts =
+    my @plugins =
       (['GatherDir' => {exclude_filename => 'Changes'}], 'FakeRelease');
 
-    if (scalar @_ == 0) {
-        push @opts, 'ChangelogFromGit::CPAN::Changes';
+    if ($self->changes_opts) {
+        push @plugins,
+          ['ChangelogFromGit::CPAN::Changes' => $self->changes_opts];
     } else {
-        @opts = (@opts, @_);
+        push @plugins, 'ChangelogFromGit::CPAN::Changes';
     }
 
-    $self->tzil_ini({'source/dist.ini' => simple_ini(@opts)});
+    my $tzil = Builder->from_config(
+        {dist_root => $self->test_repo},
+        {
+            add_files => {'source/dist.ini' => simple_ini(@plugins)}
+        },
+    );
+    return $tzil;
 }
 
 # extracts the test git repo from a tarball
@@ -65,7 +66,11 @@ sub _build_test_repo {
 }
 
 after teardown => sub { shift->test_repo->remove_tree({safe => 0}) };
-after each_test => sub { shift->clear_tzil };
+after each_test => sub {
+    my $self = shift;
+    $self->clear_tzil;
+    $self->clear_changes_opts;
+};
 
 sub test_changes {
     my ($self, $expected_name) = @_;
@@ -83,7 +88,7 @@ sub test_changes {
     diag "Comparing $changes_file to $expected_file";
 
     # everything should match except the date
-    foreach (my $i = 0 ; $i < scalar @expected_changes ; $i++) {
+    for my $i (0 .. scalar @expected_changes - 1) {
         if ($expected_changes[$i] =~ /^\d+\.\d{3}/) {
             like $got_changes[$i],
               qr/^\d+\.\d{3}(_\d+)? \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z?$/,
@@ -92,6 +97,8 @@ sub test_changes {
             is $got_changes[$i], $expected_changes[$i], 'Matched line';
         }
     }
+
+    return;
 }
 
 1;
