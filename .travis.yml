@@ -1,22 +1,41 @@
+---
+sudo: false
+addons:
+  apt:
+    packages:
+      - aspell
+      - aspell-en
 language: perl
 perl:
-  - "5.16"
-  - "5.18"
-  - "5.20"
-  - "5.22"
-  - "5.24"
-  - "dev"
-  - "blead"
-env:
-  - AUTHOR_TESTING=0
+  - blead
+  - dev
+  - '5.26'
+  - '5.24'
+  - '5.22'
+  - '5.20'
+  - '5.18'
+  - '5.16'
+  - '5.14'
+  - '5.12'
+  - '5.10'
+cache:
+  directories:
+    - $HOME/perl5
 matrix:
-  include:
-    - perl: 5.24
-      env: COVERAGE=1 AUTHOR_TESTING=0
   allow_failures:
-    - perl: blead       # ignore failures for blead perl
-sudo: false             # faster builds as long as you don't need sudo access
+    - perl: blead
+  include:
+    - env: COVERAGE=1
+      perl: '5.26'
+env:
+  global:
+    - AUTHOR_TESTING=1
+    - RELEASE_TESTING=1
 before_install:
-  - git config --global user.email "perl-helpers@travis-ci.com"
-  - git config --global user.name "Travis Perl Helpers"
-  - eval $(curl https://travis-perl.github.io/init) --auto
+  - eval $(curl https://travis-perl.github.io/init) --auto --always-upgrade-modules
+### __app_cisetup__
+# ---
+# force_threaded_perls: 0
+# perl_caching: 1
+
+### __app_cisetup__
